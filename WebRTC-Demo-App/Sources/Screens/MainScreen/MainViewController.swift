@@ -9,8 +9,9 @@
 import UIKit
 import AVFoundation
 import WebRTC
+import WebKit
 
-class MainViewController: UIViewController {
+class MainViewController: UIViewController,WKNavigationDelegate {
 
     private let signalClient: SignalingClient
     private let webRTCClient: WebRTCClient
@@ -111,7 +112,30 @@ class MainViewController: UIViewController {
         self.webRTCClient.delegate = self
         self.signalClient.delegate = self
         self.signalClient.connect()
+        
+       addWebView()
     }
+     
+func addWebView() {
+            let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: view.bounds.height))
+            webView.navigationDelegate = self
+            view.addSubview(webView)
+            
+            let url = URL(string: "https://google.com")!
+            let request = URLRequest(url: url)
+            webView.load(request)
+    
+                if let htmlFilePath = Bundle.main.path(forResource: "index", ofType: "html") {
+                    do {
+                        let htmlString = try String(contentsOfFile: htmlFilePath, encoding: .utf8)
+                        webView.loadHTMLString(htmlString, baseURL: Bundle.main.bundleURL)
+                    } catch {
+                        print("Error loading HTML file: \(error)")
+                    }
+                } else {
+                    print("HTML file not found.")
+                }
+        }
     
     @IBAction private func offerDidTap(_ sender: UIButton) {
         self.webRTCClient.offer { (sdp) in
@@ -119,6 +143,9 @@ class MainViewController: UIViewController {
             self.signalClient.send(sdp: sdp)
         }
     }
+    
+    @IBOutlet weak var webView: WKWebView!
+
     
     @IBAction private func answerDidTap(_ sender: UIButton) {
         self.webRTCClient.answer { (localSdp) in

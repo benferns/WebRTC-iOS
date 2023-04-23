@@ -126,6 +126,9 @@ final class WebRTCClient: NSObject {
             let fps = (format.videoSupportedFrameRateRanges.sorted { return $0.maxFrameRate < $1.maxFrameRate }.last) else {
             return
         }
+        
+        print("------------------------" , Int(fps.maxFrameRate))
+        print("------------------------" , format)
 
         capturer.startCapture(with: frontCamera,
                               format: format,
@@ -153,8 +156,8 @@ final class WebRTCClient: NSObject {
         let streamId = "stream"
         
         // Audio
-        let audioTrack = self.createAudioTrack()
-        self.peerConnection.add(audioTrack, streamIds: [streamId])
+        //let audioTrack = self.createAudioTrack()
+        //self.peerConnection.add(audioTrack, streamIds: [streamId])
         
         // Video
         let videoTrack = self.createVideoTrack()
