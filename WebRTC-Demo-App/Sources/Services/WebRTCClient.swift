@@ -111,31 +111,71 @@ final class WebRTCClient: NSObject {
         guard let capturer = self.videoCapturer as? RTCCameraVideoCapturer else {
             return
         }
-
-        guard
-            let frontCamera = (RTCCameraVideoCapturer.captureDevices().first { $0.position == .front }),
         
-            // choose highest res
-            let format = (RTCCameraVideoCapturer.supportedFormats(for: frontCamera).sorted { (f1, f2) -> Bool in
-                let width1 = CMVideoFormatDescriptionGetDimensions(f1.formatDescription).width
-                let width2 = CMVideoFormatDescriptionGetDimensions(f2.formatDescription).width
-                return width1 < width2
-            }).last,
-        
-            // choose highest fps
-            let fps = (format.videoSupportedFrameRateRanges.sorted { return $0.maxFrameRate < $1.maxFrameRate }.last) else {
+        guard let frontCamera = (RTCCameraVideoCapturer.captureDevices().first { $0.position == .front }) else {
             return
         }
         
-        print("------------------------" , Int(fps.maxFrameRate))
-        print("------------------------" , format)
-
-        capturer.startCapture(with: frontCamera,
-                              format: format,
-                              fps: Int(fps.maxFrameRate))
+        let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: frontCamera)
         
+        let targetWidth: Int32 = 1920
+        let targetHeight: Int32 = 1080
+        let targetFps: Float64 = 60
+        let targetPixelFormatString = "420f"
+        /*let targetPixelFormatType = FourCharCode(targetPixelFormatString.utf8.reduce(0, { sum, character in
+         return sum << 8 | UInt32(character)
+         }))*/
+        
+        for format in supportedFormats {
+            let dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+            let pixelFormatType = format.formatDescription.mediaSubType.rawValue
+            let pixelFormatString = FourCharCode(pixelFormatType).toString()
+            
+            print("Resolution: \(dimensions.width) x \(dimensions.height), Pixel Format: \(pixelFormatString)")
+            
+            for frameRateRange in format.videoSupportedFrameRateRanges {
+                print("Frame Rate Range: \(frameRateRange.minFrameRate) - \(frameRateRange.maxFrameRate) fps")
+            }
+            
+            print("---")
+        }
+        
+        let matchingFormats = supportedFormats.filter { format in
+            let dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+            let pixelFormatType = format.formatDescription.mediaSubType.rawValue
+            let pixelFormatString = FourCharCode(pixelFormatType).toString()
+            let frameRateRanges = format.videoSupportedFrameRateRanges
+
+            for frameRateRange in frameRateRanges {
+                print("- \(frameRateRange.minFrameRate) - \(frameRateRange.maxFrameRate) fps")
+            }
+            
+            let desiredResolution = "\(targetWidth)x\(targetHeight)"
+            let actualResolution = "\(dimensions.width)x\(dimensions.height)"
+            let desiredPixelFormat = targetPixelFormatString
+            let actualPixelFormat = pixelFormatString
+            let desiredFrameRate = targetFps
+            let actualFrameRate = frameRateRanges.filter { $0.minFrameRate <= targetFps && $0.maxFrameRate >= targetFps }.first?.maxFrameRate ?? 0
+            
+           // print("  Desired resolution: \(desiredResolution), actual resolution: \(actualResolution)")
+           // print("  Desired pixel format: \(desiredPixelFormat), actual pixel format: \(actualPixelFormat)")
+            //print("  Desired frame rate: \(desiredFrameRate) fps, actual frame rate: \(actualFrameRate) fps")
+            
+            return dimensions.width == targetWidth && dimensions.height == targetHeight
+            && pixelFormatString == targetPixelFormatString
+            && frameRateRanges.contains(where: { $0.minFrameRate <= targetFps && $0.maxFrameRate >= targetFps })
+        }
+        
+        guard let format = matchingFormats.first else {
+            print("No matching format found")
+            return
+        }
+        capturer.startCapture(with: frontCamera, format: format, fps: Int(targetFps))
         self.localVideoTrack?.add(renderer)
     }
+
+
+
     
     func renderRemoteVideo(to renderer: RTCVideoRenderer) {
         self.remoteVideoTrack?.add(renderer)
@@ -255,6 +295,27 @@ extension WebRTCClient {
             .forEach { $0.isEnabled = isEnabled }
     }
 }
+
+extension FourCharCode {
+    func toString() -> String {
+        let n = Int(self)
+        var s: String = ""
+        s.append(Character(UnicodeScalar((n >> 24) & 255)!))
+        s.append(Character(UnicodeScalar((n >> 16) & 255)!))
+        s.append(Character(UnicodeScalar((n >> 8) & 255)!))
+        s.append(Character(UnicodeScalar(n & 255)!))
+        return s
+    }
+    init?(fromString string: String) {
+        guard string.count == 4 else { return nil }
+        var code: FourCharCode = 0
+        for char in string.utf16 {
+            code = (code << 8) | FourCharCode(char)
+        }
+        self.init(code)
+    }
+}
+
 
 // MARK: - Video control
 extension WebRTCClient {
