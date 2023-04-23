@@ -47,6 +47,8 @@ final class WebRTCClient: NSObject {
         let config = RTCConfiguration()
         config.iceServers = [RTCIceServer(urlStrings: iceServers)]
         
+        
+        
         // Unified plan is more superior than planB
         config.sdpSemantics = .unifiedPlan
         
@@ -71,6 +73,29 @@ final class WebRTCClient: NSObject {
     
     // MARK: Signaling
     func offer(completion: @escaping (_ sdp: RTCSessionDescription) -> Void) {
+        
+        
+        // TODO - this should be somewhere more sensible.
+        let videoTransceiver = self.peerConnection.transceivers.first { $0.mediaType == .video }
+        let videoSender = videoTransceiver?.sender
+        
+        let encodingParameters = RTCRtpEncodingParameters()
+        let maxBitrateBps : NSNumber = 16000000 //16mbps
+        encodingParameters.maxBitrateBps = maxBitrateBps
+        
+        
+        let parameters = videoSender?.parameters
+        if let existingEncodings = parameters?.encodings, existingEncodings.count > 0 {
+            existingEncodings[0].maxBitrateBps = maxBitrateBps
+            parameters?.encodings = existingEncodings
+        } else {
+            parameters?.encodings = [encodingParameters]
+        }
+        
+        videoSender?.parameters = parameters ?? RTCRtpParameters()
+
+        
+        
         let constrains = RTCMediaConstraints(mandatoryConstraints: self.mediaConstrains,
                                              optionalConstraints: nil)
         self.peerConnection.offer(for: constrains) { (sdp, error) in
@@ -112,11 +137,11 @@ final class WebRTCClient: NSObject {
             return
         }
         
-        guard let frontCamera = (RTCCameraVideoCapturer.captureDevices().first { $0.position == .front }) else {
+        guard let backCamera = (RTCCameraVideoCapturer.captureDevices().first { $0.position == .back }) else {
             return
         }
         
-        let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: frontCamera)
+        let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: backCamera)
         
         let targetWidth: Int32 = 1920
         let targetHeight: Int32 = 1080
@@ -149,14 +174,14 @@ final class WebRTCClient: NSObject {
             for frameRateRange in frameRateRanges {
                 print("- \(frameRateRange.minFrameRate) - \(frameRateRange.maxFrameRate) fps")
             }
-            
+            /*
             let desiredResolution = "\(targetWidth)x\(targetHeight)"
             let actualResolution = "\(dimensions.width)x\(dimensions.height)"
             let desiredPixelFormat = targetPixelFormatString
             let actualPixelFormat = pixelFormatString
             let desiredFrameRate = targetFps
             let actualFrameRate = frameRateRanges.filter { $0.minFrameRate <= targetFps && $0.maxFrameRate >= targetFps }.first?.maxFrameRate ?? 0
-            
+            */
            // print("  Desired resolution: \(desiredResolution), actual resolution: \(actualResolution)")
            // print("  Desired pixel format: \(desiredPixelFormat), actual pixel format: \(actualPixelFormat)")
             //print("  Desired frame rate: \(desiredFrameRate) fps, actual frame rate: \(actualFrameRate) fps")
@@ -170,7 +195,8 @@ final class WebRTCClient: NSObject {
             print("No matching format found")
             return
         }
-        capturer.startCapture(with: frontCamera, format: format, fps: Int(targetFps))
+        capturer.startCapture(with: backCamera, format: format, fps: Int(targetFps))
+        
         self.localVideoTrack?.add(renderer)
     }
 
@@ -202,6 +228,11 @@ final class WebRTCClient: NSObject {
         // Video
         let videoTrack = self.createVideoTrack()
         self.localVideoTrack = videoTrack
+        
+
+    
+        
+        
         self.peerConnection.add(videoTrack, streamIds: [streamId])
         self.remoteVideoTrack = self.peerConnection.transceivers.first { $0.mediaType == .video }?.receiver.track as? RTCVideoTrack
         
@@ -228,7 +259,9 @@ final class WebRTCClient: NSObject {
         self.videoCapturer = RTCCameraVideoCapturer(delegate: videoSource)
         #endif
         
+        
         let videoTrack = WebRTCClient.factory.videoTrack(with: videoSource, trackId: "video0")
+        
         return videoTrack
     }
     

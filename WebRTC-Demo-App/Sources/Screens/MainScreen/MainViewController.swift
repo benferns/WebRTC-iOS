@@ -120,11 +120,11 @@ func addWebView() {
             let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: view.bounds.height))
             webView.navigationDelegate = self
             view.addSubview(webView)
-            
+            /*
             let url = URL(string: "https://google.com")!
             let request = URLRequest(url: url)
             webView.load(request)
-    
+    */
                 if let htmlFilePath = Bundle.main.path(forResource: "index", ofType: "html") {
                     do {
                         let htmlString = try String(contentsOfFile: htmlFilePath, encoding: .utf8)
