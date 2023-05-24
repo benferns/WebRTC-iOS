@@ -179,14 +179,102 @@ final class WebRTCClient: NSObject {
             }
     }
     
+    func receiveOfferJson(answerString: String){
+        
+        // Parse the answer JSON string into an RTCSessionDescription object
+        if let data = answerString.data(using: .utf8),
+           let answerDict = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+           let sdpTypeString = answerDict["type"] as? String,
+           let sdp = answerDict["sdp"] as? String {
+            
+            let sdpType = RTCSessionDescription.type(for: sdpTypeString)
+            let offer = RTCSessionDescription(type: sdpType, sdp: sdp)
+            
+            // Set the received offer as the remote description
+            DispatchQueue.main.async {
+                self.peerConnection.setRemoteDescription(offer) { (error) in
+                    if let error = error {
+                        print("Failed to set remote description: \(error.localizedDescription)")
+                    } else {
+                        print("Remote offer description set successfully")
+                        self.answer {offer in
+                            print("answer sent")
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     func answer(completion: @escaping (_ sdp: RTCSessionDescription) -> Void)  {
+        
+        // TODO - this should be somewhere more sensible.
+        let videoTransceiver = self.peerConnection.transceivers.first { $0.mediaType == .video }
+        let videoSender = videoTransceiver?.sender
+        
+        
+        let encodingParameters = RTCRtpEncodingParameters()
+        let maxBitrateBps : NSNumber = 16000000 //16mbps
+        let minBitrateBps : NSNumber = 8000000 //8mbps
+        encodingParameters.maxBitrateBps = maxBitrateBps
+        encodingParameters.minBitrateBps = maxBitrateBps
+        encodingParameters.scaleResolutionDownBy = nil
+        encodingParameters.adaptiveAudioPacketTime = false
+        encodingParameters.maxFramerate = 60
+        encodingParameters.bitratePriority = 1
+        
+        
+        let parameters = videoSender?.parameters
+        
+        if let existingEncodings = parameters?.encodings, existingEncodings.count > 0 {
+            existingEncodings[0].maxBitrateBps = maxBitrateBps
+            existingEncodings[0].minBitrateBps = minBitrateBps
+            existingEncodings[0].scaleResolutionDownBy = nil
+            existingEncodings[0].adaptiveAudioPacketTime = false
+            existingEncodings[0].maxFramerate = 60
+            encodingParameters.bitratePriority = 1
+            
+            parameters?.encodings = existingEncodings
+        } else {
+            parameters?.encodings = [encodingParameters]
+        }
+        
+        videoSender?.parameters = parameters ?? RTCRtpParameters()
+        
+        self.mediaConstrains["minWidth"] = "1920"
+        //self.mediaConstrains["maxWidth"] = "641"
+        self.mediaConstrains["minHeight"] = "1080"
+        self.mediaConstrains["height"] = "1080"
+        self.mediaConstrains["width"] = "1920"
+        self.mediaConstrains["minFrameRate"] = "30"
+        self.mediaConstrains["maxFrameRate"] = "60"
+        self.mediaConstrains["scaleResolutionDownBy"] = "1" //default, wont scale
+        
+        
+        //let minWdith new RTCPair(initWithKey:"minWidth" value:"640")
+        
         let constrains = RTCMediaConstraints(mandatoryConstraints: self.mediaConstrains,
-                                             optionalConstraints: nil)
+                                             optionalConstraints: self.mediaConstrains)
         self.peerConnection.answer(for: constrains) { (sdp, error) in
+            //print(sdp?.description)
             guard let sdp = sdp else {
                 return
             }
             
+            
+            // Convert the offer to a JSON string
+            let sdpTypeString = RTCSessionDescription.string(for: sdp.type)
+            let offerDict: [String: Any] = ["type": sdpTypeString, "sdp": sdp.sdp]
+            let jsonData = try? JSONSerialization.data(withJSONObject: offerDict, options: [])
+            let jsonString = String(data: jsonData!, encoding: .utf8)
+            
+            // Send the SDP offer to the JavaScript side on the main thread
+            DispatchQueue.main.async {
+                self.webView!.evaluateJavaScript("receiveAnswerFromiOS(\(jsonString!))", completionHandler: nil)
+            }
+            
+            
+            print("Local answer descriptino set")
             self.peerConnection.setLocalDescription(sdp, completionHandler: { (error) in
                 completion(sdp)
             })

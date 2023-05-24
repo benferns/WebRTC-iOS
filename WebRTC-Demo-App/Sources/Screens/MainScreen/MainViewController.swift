@@ -121,20 +121,26 @@ class MainViewController: UIViewController,WKNavigationDelegate, WKScriptMessage
         if message.name == "receiveAnswer", let answerString = message.body as? String {
             self.webRTCClient.receiveAnswerJson(answerString: answerString)
         }
+        if message.name == "receiveOffer", let answerString = message.body as? String {
+            self.webRTCClient.receiveOfferJson(answerString: answerString)
+        }
     }
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         // TODO - only run on init
+        
         self.webRTCClient.offer { (sdp) in
             self.hasLocalSdp = true
             // self.signalClient.send(sdp: sdp)
         }
+         
     }
     
      
 func addWebView() {
             let contentController = WKUserContentController()
             contentController.add(self, name: "receiveAnswer")
+            contentController.add(self, name: "receiveOffer")
             
             let configuration = WKWebViewConfiguration()
             configuration.userContentController = contentController
@@ -236,6 +242,7 @@ extension MainViewController: WebRTCClientDelegate {
             self.webRTCClient.offer { (sdp) in
                 self.hasLocalSdp = true
             }
+             
              
             break
         case .connected, .completed:

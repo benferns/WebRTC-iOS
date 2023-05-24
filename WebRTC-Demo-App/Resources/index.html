@@ -37,6 +37,34 @@
               //console.log(peerConnection.localDescription);
           });
       };
+      
+      function sendOfferToiOS(){
+          console.log("send offer to iOS");
+          
+          // Create an offer and set it as the local description
+          peerConnection.createOffer().then(offer => {
+              return peerConnection.setLocalDescription(offer);
+          }).then(() => {
+              // Convert the offer to a JSON string
+              const offerString = JSON.stringify(peerConnection.localDescription);
+              
+              // Call the function on the iOS side to receive the offer (e.g., using webkit.messageHandlers)
+              window.webkit.messageHandlers.receiveOffer.postMessage(offerString);
+              console.log("sent offer to iOS");
+              //console.log(peerConnection.localDescription);
+          });
+      }
+      
+      window.receiveAnswerFromiOS = function(sdp) {
+          console.log("receive answer from iOS");
+          // Parse the JSON string into an object
+          //const offer = JSON.parse(sdp);
+          const offer = sdp
+          console.log(sdp);
+          
+          // Set the received offer as the remote description
+          peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
+      };
     
       
     // HTML elements
@@ -65,6 +93,7 @@
       }
     };
 
+      //sendOfferToiOS();
      
 
   </script>
