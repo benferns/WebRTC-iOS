@@ -11,11 +11,12 @@ import AVFoundation
 import WebRTC
 import WebKit
 
-class MainViewController: UIViewController,WKNavigationDelegate {
+class MainViewController: UIViewController,WKNavigationDelegate, WKScriptMessageHandler {
 
-    private let signalClient: SignalingClient
+    //private let signalClient: SignalingClient
     private let webRTCClient: WebRTCClient
     private lazy var videoViewController = VideoViewController(webRTCClient: self.webRTCClient)
+    private var webView : WKWebView?
     
     @IBOutlet private weak var speakerButton: UIButton?
     @IBOutlet private weak var signalingStatusLabel: UILabel?
@@ -87,8 +88,8 @@ class MainViewController: UIViewController,WKNavigationDelegate {
         }
     }
     
-    init(signalClient: SignalingClient, webRTCClient: WebRTCClient) {
-        self.signalClient = signalClient
+    init(webRTCClient: WebRTCClient) {
+       // self.signalClient = signalClient
         self.webRTCClient = webRTCClient
         super.init(nibName: String(describing: MainViewController.self), bundle: Bundle.main)
     }
@@ -110,21 +111,41 @@ class MainViewController: UIViewController,WKNavigationDelegate {
         self.webRTCStatusLabel?.text = "New"
         
         self.webRTCClient.delegate = self
-        self.signalClient.delegate = self
-        self.signalClient.connect()
+       // self.signalClient.delegate = self
+       // self.signalClient.connect()
         
        addWebView()
     }
+    
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        if message.name == "receiveAnswer", let answerString = message.body as? String {
+            self.webRTCClient.receiveAnswerJson(answerString: answerString)
+        }
+    }
+    
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        // TODO - only run on init
+        self.webRTCClient.offer { (sdp) in
+            self.hasLocalSdp = true
+            // self.signalClient.send(sdp: sdp)
+        }
+    }
+    
      
 func addWebView() {
-            let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: view.bounds.height))
+            let contentController = WKUserContentController()
+            contentController.add(self, name: "receiveAnswer")
+            
+            let configuration = WKWebViewConfiguration()
+            configuration.userContentController = contentController
+    
+            configuration.allowsInlineMediaPlayback=true;
+
+            
+            let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: view.bounds.height),configuration: configuration)
             webView.navigationDelegate = self
             view.addSubview(webView)
-            /*
-            let url = URL(string: "https://google.com")!
-            let request = URLRequest(url: url)
-            webView.load(request)
-    */
+  
                 if let htmlFilePath = Bundle.main.path(forResource: "index", ofType: "html") {
                     do {
                         let htmlString = try String(contentsOfFile: htmlFilePath, encoding: .utf8)
@@ -135,31 +156,32 @@ func addWebView() {
                 } else {
                     print("HTML file not found.")
                 }
+    
+            self.webView = webView
+            self.webRTCClient.webView = webView
         }
     
     @IBAction private func offerDidTap(_ sender: UIButton) {
         self.webRTCClient.offer { (sdp) in
             self.hasLocalSdp = true
-            self.signalClient.send(sdp: sdp)
+           // self.signalClient.send(sdp: sdp)
         }
     }
     
-    @IBOutlet weak var webView: WKWebView!
 
-    
     @IBAction private func answerDidTap(_ sender: UIButton) {
         self.webRTCClient.answer { (localSdp) in
             self.hasLocalSdp = true
-            self.signalClient.send(sdp: localSdp)
+           // self.signalClient.send(sdp: localSdp)
         }
     }
     
     @IBAction private func speakerDidTap(_ sender: UIButton) {
         if self.speakerOn {
-            self.webRTCClient.speakerOff()
+            //self.webRTCClient.speakerOff()
         }
         else {
-            self.webRTCClient.speakerOn()
+           // self.webRTCClient.speakerOn()
         }
         self.speakerOn = !self.speakerOn
     }
@@ -196,56 +218,41 @@ func addWebView() {
     }
 }
 
-extension MainViewController: SignalClientDelegate {
-    func signalClientDidConnect(_ signalClient: SignalingClient) {
-        self.signalingConnected = true
-    }
-    
-    func signalClientDidDisconnect(_ signalClient: SignalingClient) {
-        self.signalingConnected = false
-    }
-    
-    func signalClient(_ signalClient: SignalingClient, didReceiveRemoteSdp sdp: RTCSessionDescription) {
-        print("Received remote sdp")
-        self.webRTCClient.set(remoteSdp: sdp) { (error) in
-            self.hasRemoteSdp = true
-        }
-    }
-    
-    func signalClient(_ signalClient: SignalingClient, didReceiveCandidate candidate: RTCIceCandidate) {
-        self.webRTCClient.set(remoteCandidate: candidate) { error in
-            print("Received remote candidate")
-            self.remoteCandidateCount += 1
-        }
-    }
-}
 
 extension MainViewController: WebRTCClientDelegate {
     
     func webRTCClient(_ client: WebRTCClient, didDiscoverLocalCandidate candidate: RTCIceCandidate) {
         print("discovered local candidate")
+        
         self.localCandidateCount += 1
-        self.signalClient.send(candidate: candidate)
+        //self.signalClient.send(candidate: candidate)
     }
     
     func webRTCClient(_ client: WebRTCClient, didChangeConnectionState state: RTCIceConnectionState) {
-        let textColor: UIColor
+   
         switch state {
+        case .checking:
+            
+            self.webRTCClient.offer { (sdp) in
+                self.hasLocalSdp = true
+            }
+             
+            break
         case .connected, .completed:
-            textColor = .green
+            DispatchQueue.main.async {
+                let _ = self.videoViewController.startVideo(withRenderer: false)
+            }
+            break
         case .disconnected:
-            textColor = .orange
+            break
         case .failed, .closed:
-            textColor = .red
-        case .new, .checking, .count:
-            textColor = .black
+            break
+        case .new, .count:
+            break
         @unknown default:
-            textColor = .black
+            break
         }
-        DispatchQueue.main.async {
-            self.webRTCStatusLabel?.text = state.description.capitalized
-            self.webRTCStatusLabel?.textColor = textColor
-        }
+
     }
     
     func webRTCClient(_ client: WebRTCClient, didReceiveData data: Data) {

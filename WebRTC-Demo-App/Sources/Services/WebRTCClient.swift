@@ -8,6 +8,7 @@
 
 import Foundation
 import WebRTC
+import WebKit
 
 protocol WebRTCClientDelegate: AnyObject {
     func webRTCClient(_ client: WebRTCClient, didDiscoverLocalCandidate candidate: RTCIceCandidate)
@@ -22,6 +23,7 @@ final class WebRTCClient: NSObject {
     private static let factory: RTCPeerConnectionFactory = {
         RTCInitializeSSL()
         let videoEncoderFactory = RTCDefaultVideoEncoderFactory()
+        //videoEncoderFactory.preferredCodec = RTCVideoCodecInfo(name: "H264")
         let videoDecoderFactory = RTCDefaultVideoDecoderFactory()
         return RTCPeerConnectionFactory(encoderFactory: videoEncoderFactory, decoderFactory: videoDecoderFactory)
     }()
@@ -29,14 +31,17 @@ final class WebRTCClient: NSObject {
     weak var delegate: WebRTCClientDelegate?
     private let peerConnection: RTCPeerConnection
     private let rtcAudioSession =  RTCAudioSession.sharedInstance()
-    private let audioQueue = DispatchQueue(label: "audio")
-    private let mediaConstrains = [kRTCMediaConstraintsOfferToReceiveAudio: kRTCMediaConstraintsValueTrue,
+    //private let audioQueue = DispatchQueue(label: "audio")
+    private var mediaConstrains = [kRTCMediaConstraintsOfferToReceiveAudio: kRTCMediaConstraintsValueTrue,
                                    kRTCMediaConstraintsOfferToReceiveVideo: kRTCMediaConstraintsValueTrue]    
     private var videoCapturer: RTCVideoCapturer?
     private var localVideoTrack: RTCVideoTrack?
     private var remoteVideoTrack: RTCVideoTrack?
     private var localDataChannel: RTCDataChannel?
     private var remoteDataChannel: RTCDataChannel?
+    
+    private var videoStarted = false;
+    public var webView: WKWebView?
 
     @available(*, unavailable)
     override init() {
@@ -45,15 +50,15 @@ final class WebRTCClient: NSObject {
     
     required init(iceServers: [String]) {
         let config = RTCConfiguration()
-        config.iceServers = [RTCIceServer(urlStrings: iceServers)]
-        
-        
+        config.iceServers = []
         
         // Unified plan is more superior than planB
         config.sdpSemantics = .unifiedPlan
         
         // gatherContinually will let WebRTC to listen to any network changes and send any new candidates to the other client
         config.continualGatheringPolicy = .gatherContinually
+        
+        config.allowCodecSwitching = false;
         
         // Define media constraints. DtlsSrtpKeyAgreement is required to be true to be able to connect with web browsers.
         let constraints = RTCMediaConstraints(mandatoryConstraints: nil,
@@ -67,26 +72,39 @@ final class WebRTCClient: NSObject {
         
         super.init()
         self.createMediaSenders()
-        self.configureAudioSession()
+       // self.configureAudioSession()
         self.peerConnection.delegate = self
     }
     
     // MARK: Signaling
     func offer(completion: @escaping (_ sdp: RTCSessionDescription) -> Void) {
-        
-        
+            
         // TODO - this should be somewhere more sensible.
         let videoTransceiver = self.peerConnection.transceivers.first { $0.mediaType == .video }
         let videoSender = videoTransceiver?.sender
         
+        
         let encodingParameters = RTCRtpEncodingParameters()
         let maxBitrateBps : NSNumber = 16000000 //16mbps
+        let minBitrateBps : NSNumber = 8000000 //8mbps
         encodingParameters.maxBitrateBps = maxBitrateBps
+        encodingParameters.minBitrateBps = maxBitrateBps
+        encodingParameters.scaleResolutionDownBy = nil
+        encodingParameters.adaptiveAudioPacketTime = false
+        encodingParameters.maxFramerate = 60
+        encodingParameters.bitratePriority = 1
         
         
         let parameters = videoSender?.parameters
+        
         if let existingEncodings = parameters?.encodings, existingEncodings.count > 0 {
             existingEncodings[0].maxBitrateBps = maxBitrateBps
+            existingEncodings[0].minBitrateBps = minBitrateBps
+            existingEncodings[0].scaleResolutionDownBy = nil
+            existingEncodings[0].adaptiveAudioPacketTime = false
+            existingEncodings[0].maxFramerate = 60
+            encodingParameters.bitratePriority = 1
+            
             parameters?.encodings = existingEncodings
         } else {
             parameters?.encodings = [encodingParameters]
@@ -94,19 +112,71 @@ final class WebRTCClient: NSObject {
         
         videoSender?.parameters = parameters ?? RTCRtpParameters()
 
+        self.mediaConstrains["minWidth"] = "1920"
+        //self.mediaConstrains["maxWidth"] = "641"
+        self.mediaConstrains["minHeight"] = "1080"
+        self.mediaConstrains["height"] = "1080"
+        self.mediaConstrains["width"] = "1920"
+        self.mediaConstrains["minFrameRate"] = "30"
+        self.mediaConstrains["maxFrameRate"] = "60"
+        self.mediaConstrains["scaleResolutionDownBy"] = "1" //default, wont scale
         
+        
+        //let minWdith new RTCPair(initWithKey:"minWidth" value:"640")
         
         let constrains = RTCMediaConstraints(mandatoryConstraints: self.mediaConstrains,
-                                             optionalConstraints: nil)
+                                             optionalConstraints: self.mediaConstrains)
+        
+        // should go nowhere with no connection?
         self.peerConnection.offer(for: constrains) { (sdp, error) in
             guard let sdp = sdp else {
                 return
             }
             
+            
+            
             self.peerConnection.setLocalDescription(sdp, completionHandler: { (error) in
                 completion(sdp)
             })
+            
+            
+            // Convert the offer to a JSON string
+            let sdpTypeString = RTCSessionDescription.string(for: sdp.type)
+            let offerDict: [String: Any] = ["type": sdpTypeString, "sdp": sdp.sdp]
+            let jsonData = try? JSONSerialization.data(withJSONObject: offerDict, options: [])
+            let jsonString = String(data: jsonData!, encoding: .utf8)
+            
+            // Send the SDP offer to the JavaScript side on the main thread
+            DispatchQueue.main.async {
+                self.webView!.evaluateJavaScript("receiveOfferFromiOS(\(jsonString!))", completionHandler: nil)
+            }
+            
+            
         }
+    }
+    
+    func receiveAnswerJson(answerString: String){
+        
+            // Parse the answer JSON string into an RTCSessionDescription object
+            if let data = answerString.data(using: .utf8),
+               let answerDict = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+               let sdpTypeString = answerDict["type"] as? String,
+               let sdp = answerDict["sdp"] as? String {
+                
+                let sdpType = RTCSessionDescription.type(for: sdpTypeString)
+                let answer = RTCSessionDescription(type: sdpType, sdp: sdp)
+                                
+                // Set the received answer as the remote description
+                DispatchQueue.main.async {
+                    self.peerConnection.setRemoteDescription(answer) { (error) in
+                        if let error = error {
+                            print("Failed to set remote description: \(error.localizedDescription)")
+                        } else {
+                            print("Remote description set successfully")
+                        }
+                    }
+                }
+            }
     }
     
     func answer(completion: @escaping (_ sdp: RTCSessionDescription) -> Void)  {
@@ -133,6 +203,7 @@ final class WebRTCClient: NSObject {
     
     // MARK: Media
     func startCaptureLocalVideo(renderer: RTCVideoRenderer) {
+        
         guard let capturer = self.videoCapturer as? RTCCameraVideoCapturer else {
             return
         }
@@ -151,6 +222,7 @@ final class WebRTCClient: NSObject {
          return sum << 8 | UInt32(character)
          }))*/
         
+        /*
         for format in supportedFormats {
             let dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
             let pixelFormatType = format.formatDescription.mediaSubType.rawValue
@@ -163,41 +235,61 @@ final class WebRTCClient: NSObject {
             }
             
             print("---")
+             
         }
+         */
         
         let matchingFormats = supportedFormats.filter { format in
             let dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
             let pixelFormatType = format.formatDescription.mediaSubType.rawValue
             let pixelFormatString = FourCharCode(pixelFormatType).toString()
-            let frameRateRanges = format.videoSupportedFrameRateRanges
-
+            //let frameRateRanges = format.videoSupportedFrameRateRanges
+            /*
             for frameRateRange in frameRateRanges {
                 print("- \(frameRateRange.minFrameRate) - \(frameRateRange.maxFrameRate) fps")
             }
-            /*
+             */
+            
             let desiredResolution = "\(targetWidth)x\(targetHeight)"
             let actualResolution = "\(dimensions.width)x\(dimensions.height)"
             let desiredPixelFormat = targetPixelFormatString
             let actualPixelFormat = pixelFormatString
+           /*
             let desiredFrameRate = targetFps
             let actualFrameRate = frameRateRanges.filter { $0.minFrameRate <= targetFps && $0.maxFrameRate >= targetFps }.first?.maxFrameRate ?? 0
             */
-           // print("  Desired resolution: \(desiredResolution), actual resolution: \(actualResolution)")
-           // print("  Desired pixel format: \(desiredPixelFormat), actual pixel format: \(actualPixelFormat)")
+            print("  Desired resolution: \(desiredResolution), actual resolution: \(actualResolution)")
+            print("  Desired pixel format: \(desiredPixelFormat), actual pixel format: \(actualPixelFormat)")
             //print("  Desired frame rate: \(desiredFrameRate) fps, actual frame rate: \(actualFrameRate) fps")
             
             return dimensions.width == targetWidth && dimensions.height == targetHeight
             && pixelFormatString == targetPixelFormatString
-            && frameRateRanges.contains(where: { $0.minFrameRate <= targetFps && $0.maxFrameRate >= targetFps })
+            //&& frameRateRanges.contains(where: { $0.minFrameRate <= targetFps && $0.maxFrameRate >= targetFps })
         }
+        
+
         
         guard let format = matchingFormats.first else {
             print("No matching format found")
             return
         }
+        
+        let pixelFormatType = format.formatDescription.mediaSubType.rawValue
+        let pixelFormatString = FourCharCode(pixelFormatType).toString()
+        let frameRateRanges = format.videoSupportedFrameRateRanges
+        let dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+        print("   actual resolution: \(dimensions.width)x\(dimensions.height)")
+        print("  actual pixel format: \(pixelFormatString)")
+        print("  actual frame rate: \(frameRateRanges) fps")
+        
+        
         capturer.startCapture(with: backCamera, format: format, fps: Int(targetFps))
+       /*
+        let localRenderer = RTCMTLVideoView(frame: self.localVideoView?.frame ?? CGRect.zero)
+        localRenderer.videoContentMode = .scaleAspectFill
         
         self.localVideoTrack?.add(renderer)
+        */
     }
 
 
@@ -230,9 +322,7 @@ final class WebRTCClient: NSObject {
         self.localVideoTrack = videoTrack
         
 
-    
-        
-        
+            
         self.peerConnection.add(videoTrack, streamIds: [streamId])
         self.remoteVideoTrack = self.peerConnection.transceivers.first { $0.mediaType == .video }?.receiver.track as? RTCVideoTrack
         
@@ -302,6 +392,7 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
         debugPrint("peerConnection new connection state: \(newState)")
         self.delegate?.webRTCClient(self, didChangeConnectionState: newState)
+        
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
@@ -372,42 +463,7 @@ extension WebRTCClient {
         self.setAudioEnabled(true)
     }
     
-    // Fallback to the default playing device: headphones/bluetooth/ear speaker
-    func speakerOff() {
-        self.audioQueue.async { [weak self] in
-            guard let self = self else {
-                return
-            }
-            
-            self.rtcAudioSession.lockForConfiguration()
-            do {
-                try self.rtcAudioSession.setCategory(AVAudioSession.Category.playAndRecord.rawValue)
-                try self.rtcAudioSession.overrideOutputAudioPort(.none)
-            } catch let error {
-                debugPrint("Error setting AVAudioSession category: \(error)")
-            }
-            self.rtcAudioSession.unlockForConfiguration()
-        }
-    }
     
-    // Force speaker
-    func speakerOn() {
-        self.audioQueue.async { [weak self] in
-            guard let self = self else {
-                return
-            }
-            
-            self.rtcAudioSession.lockForConfiguration()
-            do {
-                try self.rtcAudioSession.setCategory(AVAudioSession.Category.playAndRecord.rawValue)
-                try self.rtcAudioSession.overrideOutputAudioPort(.speaker)
-                try self.rtcAudioSession.setActive(true)
-            } catch let error {
-                debugPrint("Couldn't force audio to speaker: \(error)")
-            }
-            self.rtcAudioSession.unlockForConfiguration()
-        }
-    }
     
     private func setAudioEnabled(_ isEnabled: Bool) {
         setTrackEnabled(RTCAudioTrack.self, isEnabled: isEnabled)

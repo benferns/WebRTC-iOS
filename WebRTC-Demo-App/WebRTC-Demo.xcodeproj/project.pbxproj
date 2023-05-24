@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2F0D643D26FC644100CB9A47 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = 2F0D643C26FC644100CB9A47 /* WebRTC */; };
 		2F2E228828E81A080026A8B5 /* Starscream in Frameworks */ = {isa = PBXBuildFile; productRef = 2F2E228728E81A080026A8B5 /* Starscream */; };
 		2F7EBC3622DCC6430015B46E /* WebSocketProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F7EBC3522DCC6430015B46E /* WebSocketProvider.swift */; };
 		2F7EBC3822DCCB4E0015B46E /* StarscreamProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F7EBC3722DCCB4E0015B46E /* StarscreamProvider.swift */; };
@@ -27,6 +26,8 @@
 		798FBA472200F681009F525E /* MainViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 798FBA462200F681009F525E /* MainViewController.xib */; };
 		798FBA492200F9A9009F525E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 798FBA482200F9A9009F525E /* LaunchScreen.storyboard */; };
 		B50CF86129F5327F005325A9 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = B50CF86029F5327F005325A9 /* index.html */; };
+		B5A827392A1C6B7A001ACA1E /* WebRTC-sdp-notes.txt in Resources */ = {isa = PBXBuildFile; fileRef = B5A827382A1C6B7A001ACA1E /* WebRTC-sdp-notes.txt */; };
+		B5B246742A1CE66500C99410 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = B5B246732A1CE66500C99410 /* WebRTC */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -50,6 +51,7 @@
 		798FBA462200F681009F525E /* MainViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MainViewController.xib; sourceTree = "<group>"; };
 		798FBA482200F9A9009F525E /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		B50CF86029F5327F005325A9 /* index.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
+		B5A827382A1C6B7A001ACA1E /* WebRTC-sdp-notes.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "WebRTC-sdp-notes.txt"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,8 +59,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2F0D643D26FC644100CB9A47 /* WebRTC in Frameworks */,
 				2F2E228828E81A080026A8B5 /* Starscream in Frameworks */,
+				B5B246742A1CE66500C99410 /* WebRTC in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -124,6 +126,7 @@
 		79262EDA20B0D6F500D576C1 = {
 			isa = PBXGroup;
 			children = (
+				B5A827382A1C6B7A001ACA1E /* WebRTC-sdp-notes.txt */,
 				798FBA422200F3B1009F525E /* Sources */,
 				79177C9B20B0E84600BCD399 /* Resources */,
 				79177C9A20B0E82B00BCD399 /* SupportingFiles */,
@@ -188,8 +191,8 @@
 			);
 			name = "WebRTC-Demo";
 			packageProductDependencies = (
-				2F0D643C26FC644100CB9A47 /* WebRTC */,
 				2F2E228728E81A080026A8B5 /* Starscream */,
+				B5B246732A1CE66500C99410 /* WebRTC */,
 			);
 			productName = WebRTC;
 			productReference = 79262EE320B0D6F600D576C1 /* WebRTC-Demo.app */;
@@ -222,8 +225,8 @@
 			);
 			mainGroup = 79262EDA20B0D6F500D576C1;
 			packageReferences = (
-				2F0D643B26FC644100CB9A47 /* XCRemoteSwiftPackageReference "WebRTC" */,
 				2F2E228628E81A080026A8B5 /* XCRemoteSwiftPackageReference "Starscream" */,
+				B5B246722A1CE66500C99410 /* XCRemoteSwiftPackageReference "WebRTC" */,
 			);
 			productRefGroup = 79262EE420B0D6F600D576C1 /* Products */;
 			projectDirPath = "";
@@ -240,6 +243,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B50CF86129F5327F005325A9 /* index.html in Resources */,
+				B5A827392A1C6B7A001ACA1E /* WebRTC-sdp-notes.txt in Resources */,
 				79262EEE20B0D6F800D576C1 /* Assets.xcassets in Resources */,
 				798FBA472200F681009F525E /* MainViewController.xib in Resources */,
 				79177CAA20B2283F00BCD399 /* VideoViewController.xib in Resources */,
@@ -460,14 +464,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		2F0D643B26FC644100CB9A47 /* XCRemoteSwiftPackageReference "WebRTC" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/stasel/WebRTC";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 112.0.0;
-			};
-		};
 		2F2E228628E81A080026A8B5 /* XCRemoteSwiftPackageReference "Starscream" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/daltoniam/Starscream.git";
@@ -476,18 +472,26 @@
 				minimumVersion = 4.0.0;
 			};
 		};
+		B5B246722A1CE66500C99410 /* XCRemoteSwiftPackageReference "WebRTC" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stasel/WebRTC.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 113.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		2F0D643C26FC644100CB9A47 /* WebRTC */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 2F0D643B26FC644100CB9A47 /* XCRemoteSwiftPackageReference "WebRTC" */;
-			productName = WebRTC;
-		};
 		2F2E228728E81A080026A8B5 /* Starscream */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 2F2E228628E81A080026A8B5 /* XCRemoteSwiftPackageReference "Starscream" */;
 			productName = Starscream;
+		};
+		B5B246732A1CE66500C99410 /* WebRTC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B5B246722A1CE66500C99410 /* XCRemoteSwiftPackageReference "WebRTC" */;
+			productName = WebRTC;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

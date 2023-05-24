@@ -13,83 +13,59 @@
     <button id="createOfferButton">Create Offer</button>
   </body>
   <script>
+      // JavaScript side
+      window.receiveOfferFromiOS = function(sdp) {
+          console.log("receive offer from iOS");
+          // Parse the JSON string into an object
+          //const offer = JSON.parse(sdp);
+          const offer = sdp
+          console.log(sdp);
+          
+          // Set the received offer as the remote description
+          peerConnection.setRemoteDescription(new RTCSessionDescription(offer)).then(() => {
+              // Create an answer and set it as the local description
+              return peerConnection.createAnswer();
+          }).then(answer => {
+              return peerConnection.setLocalDescription(answer);
+          }).then(() => {
+              // Convert the answer to a JSON string
+              const answerString = JSON.stringify(peerConnection.localDescription);
+              
+              // Call the function on the iOS side to receive the answer (e.g., using webkit.messageHandlers)
+              window.webkit.messageHandlers.receiveAnswer.postMessage(answerString);
+              console.log("sent answer to iOS");
+              //console.log(peerConnection.localDescription);
+          });
+      };
+    
+      
     // HTML elements
     const remoteVideo = document.getElementById("remoteVideo");
 
-    // Create a WebSocket connection to the signaling server
-    const signalingServer = new WebSocket("ws://192.168.1.100:8080");
-
     // Create a new RTCPeerConnection
     const configuration = {
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      iceServers: [],
     };
     const peerConnection = new RTCPeerConnection(configuration);
 
-    /*
-// Set up the remote video
-peerConnection.ontrack = (event) => {
-  remoteVideo.srcObject = event.streams[0];
-};
-*/
 
     const remoteStream = new MediaStream();
 
     peerConnection.ontrack = (event) => {
       console.log("ontrack", event.track);
       if (event.track.kind === "video") {
+          
         remoteStream.addTrack(event.track);
         remoteVideo.srcObject = remoteStream;
         remoteVideo.play();
         remoteVideo.onclick = () => remoteVideo.play();
+        setInterval(()=>{
+            console.log(remoteVideo.videoWidth,remoteVideo.videoHeight)
+        },1000)
       }
     };
 
-    // Handle signaling server messages
-    signalingServer.onmessage = (event) => {
-      console.log(event);
+     
 
-      const sendAsBlob = (type, payload) => {
-        const message = {
-          type: "SessionDescription",
-          payload: { sdp: payload.sdp, type: payload.type },
-        };
-        const json = JSON.stringify(message);
-        console.log("Sending message: ", message);
-        const blob = new Blob([json], { type: "application/json" });
-        signalingServer.send(blob);
-      };
-
-      // Read the Blob as a string
-      const reader = new FileReader();
-      reader.onload = () => {
-        let temp = JSON.parse(reader.result);
-        const message = temp.payload;
-
-        if (
-          message.type === "offer" &&
-          peerConnection.signalingState === "stable"
-        ) {
-          // Set remote description and create an answer
-          peerConnection
-            .setRemoteDescription(new RTCSessionDescription(message))
-            .then(() => {
-              return peerConnection.createAnswer();
-            })
-            .then((answer) => {
-              // Set local description and send the answer to the signaling server
-              return peerConnection.setLocalDescription(answer).then(() => {
-                sendAsBlob("answer", answer);
-                console.log("Sent answer to signaling server");
-              });
-            })
-            .catch((error) => {
-              console.error("Error handling offer:", error);
-            });
-        } else {
-          console.error("Unknown message type:", message.type);
-        }
-      };
-      reader.readAsText(event.data);
-    };
   </script>
 </html>
