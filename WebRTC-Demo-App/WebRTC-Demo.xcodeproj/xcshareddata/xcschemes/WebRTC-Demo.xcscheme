@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "79262EE220B0D6F600D576C1"
-               BuildableName = "WebRTC-Demo.app"
+               BuildableName = "WebRTC.app"
                BlueprintName = "WebRTC-Demo"
                ReferencedContainer = "container:WebRTC-Demo.xcodeproj">
             </BuildableReference>
@@ -31,7 +31,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "79262EE220B0D6F600D576C1"
-            BuildableName = "WebRTC-Demo.app"
+            BuildableName = "WebRTC.app"
             BlueprintName = "WebRTC-Demo"
             ReferencedContainer = "container:WebRTC-Demo.xcodeproj">
          </BuildableReference>
@@ -54,7 +54,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "79262EE220B0D6F600D576C1"
-            BuildableName = "WebRTC-Demo.app"
+            BuildableName = "WebRTC.app"
             BlueprintName = "WebRTC-Demo"
             ReferencedContainer = "container:WebRTC-Demo.xcodeproj">
          </BuildableReference>
@@ -71,7 +71,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "79262EE220B0D6F600D576C1"
-            BuildableName = "WebRTC-Demo.app"
+            BuildableName = "WebRTC.app"
             BlueprintName = "WebRTC-Demo"
             ReferencedContainer = "container:WebRTC-Demo.xcodeproj">
          </BuildableReference>

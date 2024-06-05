@@ -50,7 +50,8 @@ final class WebRTCClient: NSObject {
     
     required init(iceServers: [String]) {
         let config = RTCConfiguration()
-        config.iceServers = []
+        
+        config.iceServers = [RTCIceServer(urlStrings: Config.default.webRTCIceServers)]
         
         // Unified plan is more superior than planB
         config.sdpSemantics = .unifiedPlan

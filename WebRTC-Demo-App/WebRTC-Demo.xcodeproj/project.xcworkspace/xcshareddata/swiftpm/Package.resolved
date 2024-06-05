@@ -1,21 +1,12 @@
 {
   "pins" : [
     {
-      "identity" : "starscream",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/daltoniam/Starscream.git",
-      "state" : {
-        "revision" : "df8d82047f6654d8e4b655d1b1525c64e1059d21",
-        "version" : "4.0.4"
-      }
-    },
-    {
       "identity" : "webrtc",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/stasel/WebRTC.git",
       "state" : {
-        "revision" : "c0ca0cfb65bc08b947f9058cb97aaa8b924c6d0b",
-        "version" : "112.0.0"
+        "revision" : "32526e6758a3c5827d871f5a931d20b9132bd1ea",
+        "version" : "113.0.0"
       }
     }
   ],

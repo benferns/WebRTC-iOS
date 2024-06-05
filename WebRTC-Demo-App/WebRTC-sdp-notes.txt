@@ -1,0 +1,183 @@
+
+Sure, here's a brief annotation for each section of your SDP:
+
+v=0: This is the protocol version. 0 is the only version currently defined by the IETF.
+
+o=- 5930842292085691355 4 IN IP4 127.0.0.1: Originator and session identifier. This contains the user's username, the session ID, the version number, the network type, address type, and address.
+
+s=-: Session name, "-" denotes no session name.
+
+t=0 0: Timing information. Here, both the start and stop times are set to 0, indicating the session is not bounded by time.
+
+a=group:BUNDLE 0 1 2: This session attribute is for bundling. It means that all media types (audio, video, data) will use the same transport (same IP, port).
+
+a=extmap-allow-mixed: Session level attribute indicating that mixed RTP and RTCP packets are allowed on the same port.
+
+a=msid-semantic: WMS stream: This attribute ties media streams together that form a higher-level stream (e.g., left and right eye in a 3D video call).
+
+m=video 62479 UDP/TLS/RTP/SAVPF 96 97 98 99 100 101 127 103 35 36 104 105 106: Media description. This line describes a media stream, in this case, a video stream. The stream will use a port of 62479 and the protocols UDP/TLS/RTP/SAVPF. The numbers that follow are the payload type identifiers.
+
+c=IN IP4 192.168.1.175: Connection information, indicating the network type, address type, and connection address.
+
+a=rtcp:9 IN IP4 0.0.0.0: This attribute specifies the port (9) for RTCP traffic and the network type and address type (IP4) for the connection.
+
+a=candidate...: The SDP candidate attribute provides information about a potential connectivity path for media. Each candidate line includes a unique identifier, transport protocol, priority, IP address, port, candidate type, and more.
+
+a=ice-ufrag and a=ice-pwd: These attributes provide the ICE username fragment and password, which are used to authenticate STUN requests.
+
+a=ice-options:trickle renomination: This attribute suggests options for ICE to use. "Trickle" means ICE candidates can be gathered incrementally, and "renomination" allows the ICE agent to change the selected pair after initially choosing it.
+
+a=fingerprint:sha-256: This attribute carries the fingerprint of the DTLS (Datagram Transport Layer Security) certificate, which is used for secure communication.
+
+a=setup:actpass: This attribute indicates the DTLS role that the agent is prepared to take. "Actpass" means the agent can be either the active or passive role.
+
+a=mid:0: This attribute is the identification-tag for the media description. It matches the labels used in the BUNDLE attribute.
+
+a=extmap...: These attributes specify RTP header extensions, which provide a way to include additional information in RTP packets.
+
+a=sendrecv: This attribute indicates the direction of the media stream; in this case, the stream can be both sent and received.
+
+a=msid:stream video0: This attribute represents the media streamSure, here's a brief description of what each section does in the SDP:
+
+v=0: This is the SDP version. It is always 0 in SDP.
+
+o=- 5930842292085691355 4 IN IP4 127.0.0.1: This line is the origin field. It contains a username, session id, session version, network type, address type, and unicast address of the machine from which the session was created.
+
+s=-: The session name. In this case, it is "-" indicating there's no specific session name.
+
+t=0 0: This is the time the session is active. Here, it means the session is active immediately and indefinitely.
+
+a=group:BUNDLE 0 1 2: This refers to the bundle of media streams. In this case, it indicates that the media streams with identifiers 0, 1, and 2 are bundled together.
+
+a=msid-semantic: WMS stream: This line indicates the usage of media stream identifiers (msid).
+
+m=video 62479 UDP/TLS/RTP/SAVPF 96 97 98 99 100 101 127 103 35 36 104 105 106: This line represents a media description for video. It specifies the port, the protocol, and the codecs.
+
+c=IN IP4 192.168.1.175: This is the connection data. It defines the network type, address type, and connection address.
+
+a=ice-ufrag:dqWW, a=ice-pwd:ezt1FoTogiLFnEkvaXNUJzFJ, and a=ice-options:trickle renomination: These lines are related to ICE (Interactive Connectivity Establishment) for NAT traversal. They include the ICE username fragment, password, and options.
+
+a=fingerprint:sha-256 25:9A:D1:59:3B:8B:47:80:83:E3:38:12:0C:44:F1:F5:04:1F:E3:9F:34:D4:4C:0A:33:9F:AD:FF:8C:F9:74:34: This line is about DTLS (Datagram Transport Layer Security) fingerprint used for secure data transfer.
+
+a=setup:actpass: This line specifies the setup attribute as "actpass", which means that the endpoint will act as the DTLS client or server, depending on the peer's setup attribute.
+
+a=extmap:: These lines define RTP header extension mappings.
+
+a=sendrecv: This line indicates that the client is willing to send and receive media.
+
+a=rtcp-mux: This attribute indicates that RTP and RTCP traffic will be multiplexed over the same port.
+
+a=rtpmap:: These lines map an RTP payload type number to an encoding name and various parameters.
+
+a=fmtp:: These lines provide format parameters for the specified format.
+
+a=rtcp-fb:: These lines specify RTCP feedback types that the sender of this SDP is able to process.
+
+a=ssrc: and a=ssrc-group:: These lines declare the synchronization sources (SSRCs) used in this session.
+
+m=audio and m=application: Similar to the m=video, these lines represent media descriptions for audio and data channels.
+
+a=sctp-port:5000 and `a=max-message-size:The provided SDP message describes the parameters of the media streams in a WebRTC session. It is divided into three sections: a session description, and two media descriptions for video and audio. Here's a brief annotation of what each section does:
+
+Session Description:
+
+v=0: This is the version of the SDP protocol, in this case 0.
+o=- 5930842292085691355 4 IN IP4 127.0.0.1: Describes the origin of the session. The fields represent session id, version, network type, address type, and address respectively.
+s=-: Session name. The "-" is a placeholder indicating no session name is provided.
+t=0 0: Timing of the session; the two zeroes mean the session is not bounded.
+a=group:BUNDLE 0 1 2: Group attribute indicating the m-lines with identifiers 0, 1, 2 should be bundled.
+a=extmap-allow-mixed: Allows sending and receiving different types of media on a single RTP session.
+a=msid-semantic: WMS stream: This indicates the semantic of the "msid" attribute, in this case "WebRTC Media Streams" and a token "stream".
+Video Media Description:
+
+m=video 62479 UDP/TLS/RTP/SAVPF 96 97 98 99 100 101 127 103 35 36 104 105 106: Describes a media stream. Fields represent the media type, port, protocol, and the supported formats.
+c=IN IP4 192.168.1.175: Connection data for the media stream.
+a=rtcp:9 IN IP4 0.0.0.0: RTCP attribute describing the RTCP communication information.
+a=candidate:...: These lines list the ICE candidates for the connection.
+a=ice-ufrag: and a=ice-pwd:: These lines contain the ICE username fragment and password.
+a=ice-options:trickle renomination: Provides options for the ICE protocol.
+a=fingerprint:sha-256 ...: The fingerprint of the certificate used for DTLS setup.
+a=setup:actpass: The DTLS role negotiation, "actpass" means it can act as either the DTLS client or server.
+a=mid:0: Media identifier corresponding to the BUNDLE group.
+a=extmap:...: RTP header extension mappings.
+a=sendrecv: This media stream is set up for both sending and receiving media.
+a=msid:stream video0: Media stream identifier.
+a=rtcp-mux: Multiplexing RTP and RTCP on the same port.
+a=rtcp-rsize: Reduced-size RTCP is being used.
+a=rtpmap:...: Mapping of RTP payload types to codecs.
+a=rtcp-fb:...: RTCP feedback types that the sender of this media description is capable of receiving.
+a=fmtp:...: Format-specific parameters.
+a=ssrc-group:FID 3268860582 1305662039: Indicates that the two SSRCs form a single source (simulcast).
+a=ssrc:...: Attributes related to a specific SSRC.
+Audio Media Description:
+
+m=audio 58788 UDP/TLS/RTP/SAVPF 111 63 9 102 0 8 13 110 126: Similar to the video mediaSure, here's an annotation of each section in the Session Description Protocol (SDP) message:
+v=0: This is the protocol version. Currently, it is always 0.
+o=- 5930842292085691355 4 IN IP4 127.0.0.1: This is the origin field. It contains the username, session ID, session version, network type, address type, and the address of the machine from which the session was created.
+s=-: This is the session name field. In this case, it is "-", which means no session name is provided.
+t=0 0: This is the time field. It specifies the start and stop times of the session. In this case, 0 0 means the session is not bounded by time.
+a=group:BUNDLE 0 1 2: This is a session-level attribute line. It defines a group of "m=" lines (media descriptions). "BUNDLE" is a specific type of grouping that allows multiple media types to be sent over a single transport.
+a=msid-semantic: WMS stream: This is another session-level attribute line. It indicates that Media Stream Identifiers (MSIDs) are being used, with "WMS" (WebRTC Media Streams) as the semantic token.
+m=video 62479 UDP/TLS/RTP/SAVPF 96 97 98 99 100 101 127 103 35 36 104 105 106: This is a media description line. It specifies the type of media (video), the transport port (62479), the transport protocol (UDP/TLS/RTP/SAVPF), and the payload types.
+c=IN IP4 192.168.1.175: This is the connection information line. It specifies the network type (IN), address type (IP4), and connection address.
+a=rtcp:9 IN IP4 0.0.0.0: This is a media-level attribute line. It specifies the RTCP (RTP Control Protocol) communication information.
+a=candidate:...: These are multiple candidate lines. Each one specifies a potential transport address for the media.
+a=ice-ufrag: and a=ice-pwd:: These lines contain the ICE (Interactive Connectivity Establishment) username fragment and password, respectively.
+a=fingerprint:sha-256 ...: This line specifies the fingerprint of the certificate used for DTLS (Datagram Transport Layer Security) setup.
+a=setup:actpass: This line specifies the DTLS role negotiation mode.
+a=mid:0: This line specifies the media stream identification.
+a=extmap:...: These lines specify RTP header extension mappings.
+a=sendrecv: This line specifies the media direction. In this case, it is sendrecv, meaning the client can send and receive media.
+a=msid:stream video0: This line specifies the MSID and track ID for the media stream.
+a=rtcp-mux: This line indicates that RTP and RTCP traffic will be multiplexed over the same port.
+a=rtpmap:...: These lines map RTP payload type numbers to an encoding name and various parameters.
+a=fmtp:...: These lines specify format parameters for the codecs.
+a=rtcp-fb:...: These lines specify RTCP feedback types that the sender of this media description isSure, here's a brief description of what each section does in the SDP:
+v=0: This is the SDP version. It is always 0 in SDP.
+
+o=- 5930842292085691355 4 IN IP4 127.0.0.1: This line is the origin field. It contains a username, session id, session version, network type, address type, and unicast address of the machine from which the session was created.
+
+s=-: The session name. In this case, it is "-" indicating there's no specific session name.
+
+t=0 0: This is the time the session is active. Here, it means the session is active immediately and indefinitely.
+
+a=group:BUNDLE 0 1 2: This refers to the bundle of media streams. In this case, it indicates that the media streams with identifiers 0, 1, and 2 are bundled together.
+
+a=msid-semantic: WMS stream: This line indicates the usage of media stream identifiers (msid).
+
+m=video 62479 UDP/TLS/RTP/SAVPF 96 97 98 99 100 101 127 103 35 36 104 105 106: This line represents a media description for video. It specifies the port, the protocol, and the codecs.
+
+c=IN IP4 192.168.1.175: This is the connection data. It defines the network type, address type, and connection address.
+
+a=ice-ufrag:dqWW, a=ice-pwd:ezt1FoTogiLFnEkvaXNUJzFJ, and a=ice-options:trickle renomination: These lines are related to ICE (Interactive Connectivity Establishment) for NAT traversal. They include the ICE username fragment, password, and options.
+
+a=fingerprint:sha-256 25:9A:D1:59:3B:8B:47:80:83:E3:38:12:0C:44:F1:F5:04:1F:E3:9F:34:D4:4C:0A:33:9F:AD:FF:8C:F9:74:34: This line is about DTLS (Datagram Transport Layer Security) fingerprint used for secure data transfer.
+
+a=setup:actpass: This line specifies the setup attribute as "actpass", which means that the endpoint will act as the DTLS client or server, depending on the peer's setup attribute.
+
+a=extmap:: These lines define RTP header extension mappings.
+
+a=sendrecv: This line indicates that the client is willing to send and receive media.
+
+a=rtcp-mux: This attribute indicates that RTP and RTCP traffic will be multiplexed over the same port.
+
+a=rtpmap:: These lines map an RTP payload type number to an encoding name and various parameters.
+
+a=fmtp:: These lines provide format parameters for the specified format.
+
+a=rtcp-fb:: These lines specify RTCP feedback types that the sender of this SDP is able to process.
+
+a=ssrc: and a=ssrc-group:: These lines declare the synchronization sources (SSRCs) used in this session.
+
+m=audio and m=application: Similar to the m=video, these lines represent media descriptions for audio and data channels.
+
+a=sctp-port:5000 and `a=max-message-size:The provided Session Description Protocol (SDP) message describes the parameters of a WebRTC session. The SDP message consists of three main parts: a session description and two media descriptions (for video and audio). Here's a brief explanation of each part:
+
+Session Description
+
+v=0: This is the SDP protocol version, which is always 0.
+o=- 5930842292085691355 4 IN IP4 127.0.0.1: This is the origin identifier which includes the username, session ID, version number, network type, address type, and unicast address of the session originator.
+s=-: This is the session name and information field. In this case, the "-" indicates that no session name is provided.
+t=0 0: This line provides the timing of the session. The two 0's mean the session is not bounded by time.
+a=group:BUNDLE 0 1 2: This attribute line indicates that the media descriptions with identifiers (mids) 0, 1, and 2 should be bundled into a single transport.
+`a=ms
